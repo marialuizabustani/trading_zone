@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Trading Zone: radar de cartas mais valiosas por coleção, com dados do TCGplayer.">
+  <title>Trading Zone — Card Market Intelligence</title>
+  <style>
+    :root {
+      --bg: #071016;
+      --panel: #0d1920;
+      --panel-2: #10232a;
+      --panel-3: #132b32;
+      --ink: #edf7f3;
+      --muted: #829b9a;
+      --line: rgba(158, 206, 193, .16);
+      --lime: #c4f56d;
+      --cyan: #73e3dc;
+      --orange: #ffb86b;
+      --red: #ff7f7f;
+      --shadow: 0 22px 60px rgba(0, 0, 0, .24);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: radial-gradient(circle at 80% -10%, #153b3d 0, transparent 31rem), var(--bg); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    .shell { width: min(1440px, calc(100% - 42px)); margin: 0 auto; }
+    .topbar { height: 76px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; }
+    .mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; color: #142019; background: var(--lime); box-shadow: 0 0 0 5px rgba(196, 245, 109, .08); font-size: 18px; }
+    .top-actions { display: flex; gap: 10px; align-items: center; }
+    .sync { display: inline-flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 15px var(--lime); }
+    .btn { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 9px; padding: 10px 14px; font-weight: 700; font-size: 12px; transition: .2s ease; }
+    .btn:hover { border-color: var(--cyan); transform: translateY(-1px); }
+    .btn.primary { background: var(--lime); color: #152219; border-color: var(--lime); }
+    .hero { display: grid; grid-template-columns: 1.35fr .65fr; align-items: end; gap: 32px; padding: 68px 0 42px; }
+    .eyebrow { color: var(--cyan); letter-spacing: .15em; text-transform: uppercase; font-size: 11px; font-weight: 800; margin: 0 0 16px; }
+    h1 { max-width: 750px; margin: 0; font-size: clamp(42px, 6vw, 86px); line-height: .94; letter-spacing: -.07em; font-weight: 850; }
+    .hero-copy { color: var(--muted); max-width: 560px; line-height: 1.65; margin: 22px 0 0; font-size: 15px; }
+    .hero-note { justify-self: end; max-width: 260px; border-left: 2px solid var(--lime); padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .hero-note strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 4px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 20px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: rgba(13, 25, 32, .8); }
+    .field { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0 11px; border-radius: 8px; min-height: 38px; }
+    .field label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    select, input { border: 0; outline: 0; background: transparent; color: var(--ink); min-height: 36px; }
+    select option { color: #111; }
+    .search { flex: 1 1 220px; }
+    .search input { width: 100%; }
+    .search input::placeholder { color: #58706e; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card { background: linear-gradient(145deg, rgba(17, 36, 43, .95), rgba(10, 22, 28, .95)); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); }
+    .kpis { grid-column: span 12; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; overflow: hidden; background: var(--line); }
+    .kpi { background: var(--panel); padding: 22px; min-height: 134px; }
+    .kpi-label { color: var(--muted); text-transform: uppercase; letter-spacing: .09em; font-size: 10px; font-weight: 800; }
+    .kpi-value { display: block; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.06em; margin: 14px 0 5px; }
+    .kpi-foot { color: var(--muted); font-size: 11px; }
+    .up { color: var(--lime); } .down { color: var(--red); }
+    .chart-card { grid-column: span 8; padding: 24px 24px 16px; min-height: 350px; }
+    .pulse-card { grid-column: span 4; padding: 24px; }
+    .section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 22px; }
+    .section-title { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+    .section-sub { color: var(--muted); font-size: 11px; margin-top: 5px; }
+    .legend { color: var(--muted); font-size: 11px; display: flex; align-items: center; gap: 7px; }
+    .legend i { width: 8px; height: 8px; background: var(--lime); border-radius: 50%; }
+    #trend-chart { width: 100%; height: 245px; overflow: visible; }
+    .grid-line { stroke: rgba(158, 206, 193, .12); stroke-width: 1; }
+    .trend-line { fill: none; stroke: var(--lime); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .trend-area { fill: url(#areaFill); }
+    .trend-point { fill: var(--bg); stroke: var(--lime); stroke-width: 3; }
+    .chart-label { fill: var(--muted); font-size: 10px; }
+    .year-row { display: grid; grid-template-columns: 42px 1fr 70px; align-items: center; gap: 10px; margin: 18px 0; font-size: 12px; }
+    .year-row .bar { height: 7px; border-radius: 10px; background: #1d3739; overflow: hidden; }
+    .year-row .bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--lime)); }
+    .year-row strong { text-align: right; font-size: 12px; }
+    .table-card { grid-column: span 12; padding: 24px; overflow: hidden; }
+    .table-tools { display: flex; gap: 8px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; text-align: left; font-weight: 800; padding: 13px 10px; border-bottom: 1px solid var(--line); }
+    td { padding: 15px 10px; border-bottom: 1px solid rgba(158, 206, 193, .09); font-size: 13px; }
+    tbody tr:hover { background: rgba(115, 227, 220, .035); }
+    .rank { color: var(--muted); width: 42px; }
+    .card-name { display: flex; align-items: center; gap: 12px; min-width: 210px; }
+    .thumb { width: 34px; height: 46px; border-radius: 5px; object-fit: cover; background: linear-gradient(145deg, #183e40, #b5e85e); }
+    .card-name strong { display: block; }
+    .card-name small { display: block; color: var(--muted); margin-top: 3px; }
+    .pill { display: inline-flex; border-radius: 100px; padding: 4px 8px; color: var(--cyan); background: rgba(115, 227, 220, .08); font-size: 10px; font-weight: 800; }
+    .price { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .change { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .external { color: var(--cyan); text-decoration: none; font-size: 11px; font-weight: 800; }
+    .empty { padding: 38px 15px; text-align: center; color: var(--muted); }
+    footer { display: flex; justify-content: space-between; gap: 16px; padding: 24px 0 42px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    footer a { color: var(--cyan); }
+    .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 10; padding: 22px; background: rgba(1, 8, 11, .8); backdrop-filter: blur(8px); }
+    .modal-backdrop.open { display: grid; place-items: center; }
+    .modal { width: min(600px, 100%); padding: 25px; background: #10232a; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 30px 100px #000; }
+    .modal h2 { margin: 0 0 8px; font-size: 22px; letter-spacing: -.04em; }
+    .modal p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .modal .full-field { display: block; margin: 18px 0; padding: 11px 13px; }
+    .full-field input { width: 100%; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .notice { padding: 11px 13px; border-radius: 9px; background: rgba(255, 184, 107, .08); color: var(--orange); font-size: 11px; line-height: 1.5; }
+    @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-note { justify-self: start; } .chart-card, .pulse-card { grid-column: span 12; } }
+    @media (max-width: 620px) { .shell { width: min(100% - 24px, 1440px); } .topbar { height: 68px; } .sync { display: none; } .hero { padding: 48px 0 30px; } .kpis { grid-template-columns: repeat(2, 1fr); } .kpi { padding: 16px; } .kpi-value { font-size: 30px; } .table-card, .chart-card, .pulse-card { padding: 17px; } footer { display: block; } footer span { display: block; margin-bottom: 10px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="mark">TZ</span><span>Trading Zone</span></div>
+      <div class="top-actions"><span class="sync"><i class="dot"></i><span id="sync-label">Snapshot demo</span></span><button class="btn" id="open-connector">Conectar dados</button></div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Card market intelligence · 2023—2026</p>
+          <h1>Follow the cards with real momentum.</h1>
+          <p class="hero-copy">Um radar simples para encontrar as cartas mais valiosas das coleções recentes. Filtre por jogo, ano e coleção; abra o preço de mercado no TCGplayer quando quiser investigar a próxima compra.</p>
+        </div>
+        <div class="hero-note"><strong id="hero-count">20 cartas monitoradas</strong><span>Dados ordenados por market price. Atualizações reais entram via seu feed seguro do TCGplayer.</span></div>
+      </section>
+
+      <section class="filters" aria-label="Filtros do dashboard">
+        <div class="field"><label for="game-filter">Jogo</label><select id="game-filter"><option value="all">Todos os jogos</option></select></div>
+        <div class="field"><label for="year-filter">Ano</label><select id="year-filter"><option value="all">Últimos 4 anos</option></select></div>
+        <div class="field search"><label for="search">Buscar</label><input id="search" type="search" placeholder="Carta, coleção ou set..." autocomplete="off"></div>
+        <div class="field"><label for="sort-filter">Ordenar</label><select id="sort-filter"><option value="price">Maior valor</option><option value="change">Maior alta</option><option value="year">Mais recente</option></select></div>
+        <button class="btn primary" id="reset-filters">Limpar filtros</button>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="card kpis">
+          <div class="kpi"><span class="kpi-label">Market cap monitorado</span><strong class="kpi-value" id="kpi-total">—</strong><span class="kpi-foot">soma das cartas filtradas</span></div>
+          <div class="kpi"><span class="kpi-label">Market price médio</span><strong class="kpi-value" id="kpi-average">—</strong><span class="kpi-foot">por carta no recorte</span></div>
+          <div class="kpi"><span class="kpi-label">Maior alta</span><strong class="kpi-value up" id="kpi-gainer">—</strong><span class="kpi-foot" id="kpi-gainer-name">aguardando dados</span></div>
+          <div class="kpi"><span class="kpi-label">Top card</span><strong class="kpi-value" id="kpi-top">—</strong><span class="kpi-foot" id="kpi-top-name">aguardando dados</span></div>
+        </div>
+
+        <article class="card chart-card">
+          <div class="section-head"><div><h2 class="section-title">Trajetória por ano</h2><div class="section-sub">Market price médio das cartas no recorte</div></div><div class="legend"><i></i> Market price médio</div></div>
+          <svg id="trend-chart" viewBox="0 0 720 245" role="img" aria-label="Gráfico de tendência anual"></svg>
+        </article>
+
+        <article class="card pulse-card">
+          <div class="section-head"><div><h2 class="section-title">Collection pulse</h2><div class="section-sub">Valor concentrado por ano</div></div><span class="pill" id="pulse-label">4 anos</span></div>
+          <div id="year-bars"></div>
+          <div class="notice">Use o botão “Conectar dados” para apontar para um JSON estático publicado pelo seu pipeline. O navegador nunca deve receber sua chave privada.</div>
+        </article>
+
+        <article class="card table-card">
+          <div class="section-head"><div><h2 class="section-title">Most valuable cards</h2><div class="section-sub" id="table-sub">Top cartas no recorte atual</div></div><div class="table-tools"><button class="btn" id="export-data">Exportar JSON</button></div></div>
+          <div class="table-wrap"><table><thead><tr><th>#</th><th>Carta</th><th>Jogo</th><th>Ano</th><th>Market price</th><th>30d</th><th>TCGplayer</th></tr></thead><tbody id="cards-body"></tbody></table></div>
+        </article>
+      </section>
+    </main>
+
+    <footer><span>Trading Zone · Snapshot visual para pesquisa de mercado. Não é recomendação financeira.</span><span>Fonte esperada: <a href="https://www.tcgplayer.com/" target="_blank" rel="noreferrer">TCGplayer</a> · <span id="updated-at">demo embutido</span></span></footer>
+  </div>
+
+  <div class="modal-backdrop" id="connector-modal" role="dialog" aria-modal="true" aria-labelledby="connector-title">
+    <div class="modal">
+      <div class="section-head"><div><h2 id="connector-title">Conectar um feed de dados</h2><p>Informe a URL de um JSON público com os dados já tratados pelo seu workflow. Também é possível testar um arquivo local.</p></div><button class="btn" id="close-connector" aria-label="Fechar">×</button></div>
+      <div class="field full-field"><label for="feed-url">URL do feed</label><input id="feed-url" type="url" placeholder="https://seu-site/data/cards.json"></div>
+      <input id="feed-file" type="file" accept="application/json" hidden>
+      <div class="modal-actions"><button class="btn" id="choose-file">Usar arquivo local</button><button class="btn primary" id="load-feed">Carregar feed</button></div>
+      <p class="notice" style="margin:18px 0 0">Formato aceito: <code>{ "updatedAt": "...", "source": "tcgplayer", "cards": [{ "name", "set", "game", "year", "marketPrice", "change30d", "url", "imageUrl" }] }</code></p>
+    </div>
+  </div>
+
+  <script>
+    const DEMO_DATA = {
+      updatedAt: "2026-10-21",
+      source: "demo",
+      cards: [
+        { name: "Charizard ex", set: "Scarlet & Violet—151", game: "Pokémon", year: 2023, marketPrice: 112.40, change30d: 8.7, url: "https://www.tcgplayer.com/search/pokemon/scarlet-violet-151/product?productLineName=pokemon&view=grid", tone: "#fa7d67" },
+        { name: "The One Ring", set: "The Lord of the Rings: Tales of Middle-earth", game: "Magic: The Gathering", year: 2023, marketPrice: 104.90, change30d: 5.2, url: "https://www.tcgplayer.com/search/magic/product?productLineName=magic&view=grid", tone: "#c4f56d" },
+        { name: "Pikachu ex", set: "Scarlet & Violet—Surging Sparks", game: "Pokémon", year: 2024, marketPrice: 96.35, change30d: 12.1, url: "https://www.tcgplayer.com/search/pokemon/surging-sparks/product?productLineName=pokemon&view=grid", tone: "#f6ca55" },
+        { name: "Greninja ex", set: "Scarlet & Violet—Twilight Masquerade", game: "Pokémon", year: 2024, marketPrice: 88.70, change30d: -2.8, url: "https://www.tcgplayer.com/search/pokemon/twilight-masquerade/product?productLineName=pokemon&view=grid", tone: "#77a7ef" },
+        { name: "Mana Crypt", set: "Double Masters", game: "Magic: The Gathering", year: 2024, marketPrice: 82.10, change30d: -6.5, url: "https://www.tcgplayer.com/search/magic/double-masters/product?productLineName=magic&view=grid", tone: "#c986ff" },
+        { name: "Mew ex", set: "Scarlet & Violet—151", game: "Pokémon", year: 2023, marketPrice: 76.80, change30d: 4.9, url: "https://www.tcgplayer.com/search/pokemon/scarlet-violet-151/product?productLineName=pokemon&view=grid", tone: "#d78cff" },
+        { name: "Raging Bolt ex", set: "Scarlet & Violet—Temporal Forces", game: "Pokémon", year: 2024, marketPrice: 69.25, change30d: 9.4, url: "https://www.tcgplayer.com/search/pokemon/temporal-forces/product?productLineName=pokemon&view=grid", tone: "#f0a65e" },
+        { name: "Lorcana: Enchanted Rare", set: "Into the Inklands", game: "Disney Lorcana", year: 2024, marketPrice: 64.20, change30d: 3.1, url: "https://www.tcgplayer.com/search/disney-lorcana/into-the-inklands/product?productLineName=disney-lorcana&view=grid", tone: "#60d0ca" },
+        { name: "Liliana of the Veil", set: "Dominaria United", game: "Magic: The Gathering", year: 2022, marketPrice: 60.00, change30d: 1.7, url: "https://www.tcgplayer.com/search/magic/dominaria-united/product?productLineName=magic&view=grid", tone: "#a7a4e6" },
+        { name: "Pikachu VMAX", set: "Crown Zenith", game: "Pokémon", year: 2023, marketPrice: 57.40, change30d: 6.6, url: "https://www.tcgplayer.com/search/pokemon/crown-zenith/product?productLineName=pokemon&view=grid", tone: "#f4d568" },
+        { name: "The Enchanted: Elsa", set: "Ursula's Return", game: "Disney Lorcana", year: 2024, marketPrice: 52.70, change30d: -1.1, url: "https://www.tcgplayer.com/search/disney-lorcana/ursulas-return/product?productLineName=disney-lorcana&view=grid", tone: "#9ad7e8" },
+        { name: "Moonshaker Cavalry", set: "Wilds of Eldraine", game: "Magic: The Gathering", year: 2023, marketPrice: 48.55, change30d: 2.4, url: "https://www.tcgplayer.com/search/magic/wilds-of-eldraine/product?productLineName=magic&view=grid", tone: "#84d07f" },
+        { name: "Iono", set: "Paldea Evolved", game: "Pokémon", year: 2023, marketPrice: 45.30, change30d: 3.8, url: "https://www.tcgplayer.com/search/pokemon/paldea-evolved/product?productLineName=pokemon&view=grid", tone: "#f58ba8" },
+        { name: "Mewtwo ex", set: "Scarlet & Violet—151", game: "Pokémon", year: 2023, marketPrice: 43.90, change30d: 1.5, url: "https://www.tcgplayer.com/search/pokemon/scarlet-violet-151/product?productLineName=pokemon&view=grid", tone: "#9f8de1" },
+        { name: "Boseiju, Who Endures", set: "Kamigawa: Neon Dynasty", game: "Magic: The Gathering", year: 2022, marketPrice: 41.75, change30d: -0.4, url: "https://www.tcgplayer.com/search/magic/kamigawa-neon-dynasty/product?productLineName=magic&view=grid", tone: "#66c99d" },
+        { name: "Charizard ex", set: "Obsidian Flames", game: "Pokémon", year: 2023, marketPrice: 38.20, change30d: 5.4, url: "https://www.tcgplayer.com/search/pokemon/obsidian-flames/product?productLineName=pokemon&view=grid", tone: "#e97d55" },
+        { name: "Sapphire", set: "Into the Inklands", game: "Disney Lorcana", year: 2024, marketPrice: 36.50, change30d: 2.8, url: "https://www.tcgplayer.com/search/disney-lorcana/into-the-inklands/product?productLineName=disney-lorcana&view=grid", tone: "#6eafe8" },
+        { name: "Sheoldred, the Apocalypse", set: "Dominaria United", game: "Magic: The Gathering", year: 2022, marketPrice: 34.90, change30d: 4.2, url: "https://www.tcgplayer.com/search/magic/dominaria-united/product?productLineName=magic&view=grid", tone: "#b873c5" },
+        { name: "Miraidon ex", set: "Scarlet & Violet—Base Set", game: "Pokémon", year: 2023, marketPrice: 31.10, change30d: -2.0, url: "https://www.tcgplayer.com/search/pokemon/scarlet-violet-base-set/product?productLineName=pokemon&view=grid", tone: "#87c8e7" },
+        { name: "Bucky", set: "The First Chapter", game: "Disney Lorcana", year: 2023, marketPrice: 28.60, change30d: 1.9, url: "https://www.tcgplayer.com/search/disney-lorcana/the-first-chapter/product?productLineName=disney-lorcana&view=grid", tone: "#b6b5dd" }
+      ]
+    };
+
+    const state = { data: DEMO_DATA, filters: { game: "all", year: "all", search: "", sort: "price" } };
+    const $ = (id) => document.getElementById(id);
+    const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value || 0);
+    const pct = (value) => `${value > 0 ? "+" : ""}${Number(value || 0).toFixed(1)}%`;
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+
+    function normalizeCard(card) {
+      return { name: card.name || "Sem nome", set: card.set || card.groupName || "Sem coleção", game: card.game || card.category || "Outro", year: Number(card.year || new Date().getFullYear()), marketPrice: Number(card.marketPrice ?? card.market_price ?? card.midPrice ?? 0), change30d: Number(card.change30d ?? card.change ?? 0), url: card.url || "https://www.tcgplayer.com/", imageUrl: card.imageUrl || "", tone: card.tone || "#73e3dc" };
+    }
+    function filteredCards() {
+      const query = state.filters.search.toLowerCase().trim();
+      const cards = state.data.cards.map(normalizeCard).filter((card) => {
+        const matchesGame = state.filters.game === "all" || card.game === state.filters.game;
+        const matchesYear = state.filters.year === "all" || String(card.year) === state.filters.year;
+        const matchesSearch = !query || `${card.name} ${card.set} ${card.game}`.toLowerCase().includes(query);
+        return matchesGame && matchesYear && matchesSearch;
+      });
+      return cards.sort((a, b) => state.filters.sort === "change" ? b.change30d - a.change30d : state.filters.sort === "year" ? b.year - a.year || b.marketPrice - a.marketPrice : b.marketPrice - a.marketPrice);
+    }
+    function avatar(card) { return card.imageUrl ? `<img class="thumb" src="${escapeHtml(card.imageUrl)}" alt="" loading="lazy">` : `<span class="thumb" style="background:linear-gradient(145deg,${escapeHtml(card.tone)},#132d32)"></span>`; }
+    function drawTrend(cards) {
+      const svg = $("trend-chart");
+      const years = [...new Set(cards.map((card) => card.year))].sort((a, b) => a - b);
+      const values = years.map((year) => { const subset = cards.filter((card) => card.year === year); return subset.length ? subset.reduce((sum, card) => sum + card.marketPrice, 0) / subset.length : 0; });
+      const width = 720, height = 245, left = 42, right = 12, top = 16, bottom = 34;
+      const max = Math.max(...values, 1) * 1.15, min = 0;
+      const x = (i) => left + (years.length < 2 ? (width - left - right) / 2 : i * (width - left - right) / (years.length - 1));
+      const y = (v) => height - bottom - ((v - min) / (max - min)) * (height - top - bottom);
+      const points = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
+      const area = years.length ? `${left},${height - bottom} ${points} ${x(years.length - 1)},${height - bottom}` : "";
+      const grid = [0, .25, .5, .75, 1].map((ratio) => { const yy = y(max * ratio); return `<line class="grid-line" x1="${left}" x2="${width - right}" y1="${yy}" y2="${yy}"/><text class="chart-label" x="0" y="${yy + 4}">${money(max * ratio)}</text>`; }).join("");
+      const labels = years.map((year, i) => `<text class="chart-label" text-anchor="middle" x="${x(i)}" y="${height - 8}">${year}</text>`).join("");
+      const dots = values.map((value, i) => `<circle class="trend-point" cx="${x(i)}" cy="${y(value)}" r="5"><title>${years[i]} · ${money(value)}</title></circle>`).join("");
+      svg.innerHTML = `<defs><linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c4f56d" stop-opacity=".22"/><stop offset="1" stop-color="#c4f56d" stop-opacity="0"/></linearGradient></defs>${grid}${years.length ? `<polygon class="trend-area" points="${area}"/><polyline class="trend-line" points="${points}"/>${dots}${labels}` : ""}`;
+    }
+    function render() {
+      const cards = filteredCards();
+      const all = state.data.cards.map(normalizeCard);
+      const total = cards.reduce((sum, card) => sum + card.marketPrice, 0);
+      const avg = cards.length ? total / cards.length : 0;
+      const gainer = [...cards].sort((a, b) => b.change30d - a.change30d)[0];
+      const top = cards[0];
+      $("kpi-total").textContent = money(total);
+      $("kpi-average").textContent = money(avg);
+      $("kpi-gainer").textContent = gainer ? pct(gainer.change30d) : "—";
+      $("kpi-gainer-name").textContent = gainer ? gainer.name : "aguardando dados";
+      $("kpi-top").textContent = top ? money(top.marketPrice) : "—";
+      $("kpi-top-name").textContent = top ? top.name : "aguardando dados";
+      $("hero-count").textContent = `${cards.length} carta${cards.length === 1 ? "" : "s"} monitorada${cards.length === 1 ? "" : "s"}`;
+      $("table-sub").textContent = `${cards.length} resultado${cards.length === 1 ? "" : "s"} · ${state.data.source === "demo" ? "snapshot de demonstração" : "feed conectado"}`;
+      $("cards-body").innerHTML = cards.length ? cards.map((card, i) => `<tr><td class="rank">${String(i + 1).padStart(2, "0")}</td><td><div class="card-name">${avatar(card)}<span><strong>${escapeHtml(card.name)}</strong><small>${escapeHtml(card.set)}</small></span></div></td><td><span class="pill">${escapeHtml(card.game)}</span></td><td>${card.year}</td><td class="price">${money(card.marketPrice)}</td><td class="change ${card.change30d >= 0 ? "up" : "down"}">${pct(card.change30d)}</td><td><a class="external" href="${escapeHtml(card.url)}" target="_blank" rel="noreferrer">Ver no TCGplayer ↗</a></td></tr>`).join("") : `<tr><td colspan="7" class="empty">Nenhuma carta encontrada para estes filtros.</td></tr>`;
+      const years = [...new Set(all.map((card) => card.year))].sort((a, b) => b - a);
+      const byYear = years.map((year) => ({ year, value: cards.filter((card) => card.year === year).reduce((sum, card) => sum + card.marketPrice, 0) }));
+      const maxYear = Math.max(...byYear.map((item) => item.value), 1);
+      $("year-bars").innerHTML = byYear.slice(0, 6).map((item) => `<div class="year-row"><span>${item.year}</span><div class="bar"><span style="width:${Math.max(3, item.value / maxYear * 100)}%"></span></div><strong>${money(item.value)}</strong></div>`).join("") || `<div class="empty">Sem dados.</div>`;
+      $("pulse-label").textContent = `${years.length} ano${years.length === 1 ? "" : "s"}`;
+      drawTrend(cards);
+    }
+    function populateFilters() {
+      const cards = state.data.cards.map(normalizeCard);
+      const games = [...new Set(cards.map((card) => card.game))].sort();
+      const years = [...new Set(cards.map((card) => card.year))].sort((a, b) => b - a);
+      $("game-filter").innerHTML = `<option value="all">Todos os jogos</option>${games.map((game) => `<option value="${escapeHtml(game)}">${escapeHtml(game)}</option>`).join("")}`;
+      $("year-filter").innerHTML = `<option value="all">Últimos 4 anos</option>${years.map((year) => `<option value="${year}">${year}</option>`).join("")}`;
+    }
+    function setData(data) {
+      if (!data || !Array.isArray(data.cards)) throw new Error("O JSON precisa conter um array cards.");
+      state.data = { ...data, cards: data.cards.map(normalizeCard) };
+      localStorage.setItem("trading-zone-feed", JSON.stringify(state.data));
+      $("sync-label").textContent = data.source === "demo" ? "Snapshot demo" : `Feed · ${data.source || "conectado"}`;
+      $("updated-at").textContent = data.updatedAt ? `atualizado em ${data.updatedAt}` : "feed conectado";
+      populateFilters(); render();
+    }
+    async function loadUrl(url) { const response = await fetch(url, { cache: "no-store" }); if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); }
+
+    ["game-filter", "year-filter", "sort-filter"].forEach((id) => $(id).addEventListener("change", (event) => { state.filters[id === "game-filter" ? "game" : id === "year-filter" ? "year" : "sort"] = event.target.value; render(); }));
+    $("search").addEventListener("input", (event) => { state.filters.search = event.target.value; render(); });
+    $("reset-filters").addEventListener("click", () => { state.filters = { game: "all", year: "all", search: "", sort: "price" }; $("game-filter").value = "all"; $("year-filter").value = "all"; $("sort-filter").value = "price"; $("search").value = ""; render(); });
+    $("open-connector").addEventListener("click", () => $("connector-modal").classList.add("open"));
+    $("close-connector").addEventListener("click", () => $("connector-modal").classList.remove("open"));
+    $("connector-modal").addEventListener("click", (event) => { if (event.target.id === "connector-modal") event.currentTarget.classList.remove("open"); });
+    $("choose-file").addEventListener("click", () => $("feed-file").click());
+    $("feed-file").addEventListener("change", async (event) => { const file = event.target.files[0]; if (!file) return; try { setData(JSON.parse(await file.text())); $("connector-modal").classList.remove("open"); } catch (error) { alert(`Não foi possível ler o JSON: ${error.message}`); } });
+    $("load-feed").addEventListener("click", async () => { const url = $("feed-url").value.trim(); if (!url) return alert("Informe uma URL de feed JSON."); try { setData(await loadUrl(url)); $("connector-modal").classList.remove("open"); } catch (error) { alert(`Não foi possível carregar o feed: ${error.message}`); } });
+    $("export-data").addEventListener("click", () => { const blob = new Blob([JSON.stringify({ ...state.data, cards: filteredCards() }, null, 2)], { type: "application/json" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "trading-zone-cards.json"; link.click(); URL.revokeObjectURL(link.href); });
+
+    (async function boot() {
+      try { const saved = localStorage.getItem("trading-zone-feed"); if (saved) setData(JSON.parse(saved)); else { try { const remote = await loadUrl("data/cards.json"); if (remote.cards?.length) setData(remote); else setData(DEMO_DATA); } catch { setData(DEMO_DATA); } } } catch { setData(DEMO_DATA); }
+    })();
+  </script>
+</body>
+</html>
+
